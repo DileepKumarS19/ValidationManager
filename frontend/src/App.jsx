@@ -9,7 +9,7 @@ function App() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/me', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/me`, {
         credentials: 'include'
       });
       const data = await response.json();
@@ -28,7 +28,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/auth/logout', { credentials: 'include' });
+      await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, { credentials: 'include' });
       setIsAuthenticated(false);
     } catch (err) {
       console.error('Logout failed', err);

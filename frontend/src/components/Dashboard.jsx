@@ -14,7 +14,7 @@ export default function Dashboard({ onLogout }) {
     setError(null);
     setSuccessMsg(null);
     try {
-      const response = await fetch('http://localhost:5000/api/validation-rules', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/validation-rules`, {
         credentials: 'include'
       });
       if (!response.ok) {
@@ -66,7 +66,7 @@ export default function Dashboard({ onLogout }) {
     setSuccessMsg(null);
 
     try {
-      const response = await fetch('http://localhost:5000/api/deploy', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
