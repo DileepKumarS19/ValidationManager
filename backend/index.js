@@ -27,10 +27,15 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.set('trust proxy', 1); // Required for secure cookies behind Render/Heroku proxy
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
 }));
 
 const SF_LOGIN_URL = 'https://login.salesforce.com';
@@ -44,6 +49,7 @@ app.get('/auth/login', (req, res) => {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.SF_CLIENT_ID,
+    redirect_uri: process.env.SF_REDIRECT_URI,
     scope: 'api',
     code_challenge: challenge,
     code_challenge_method: 'S256'
@@ -75,7 +81,7 @@ app.get('/oauth/callback', async (req, res) => {
         grant_type: 'authorization_code',
         client_id: process.env.SF_CLIENT_ID,
         client_secret: process.env.SF_CLIENT_SECRET,
-        redirect_uri: 'http://localhost:5000/oauth/callback', // Hardcoded to prevent env issues
+        redirect_uri: process.env.SF_REDIRECT_URI,
         code: req.query.code,
         code_verifier: req.session.codeVerifier
       }
@@ -88,7 +94,7 @@ app.get('/oauth/callback', async (req, res) => {
     
     req.session.save(() => {
       console.log('✅ OAuth Success! Session saved.');
-      res.redirect('http://localhost:5173/dashboard'); // Redirect back to Vite frontend
+      res.redirect(process.env.FRONTEND_URL); // Redirect back to Vite frontend
     });
   } catch (err) {
     console.error('❌ OAuth Error:', err.response?.data || err.message);
