@@ -9,8 +9,23 @@ function App() {
 
   const checkAuth = async () => {
     try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token');
+      
+      if (urlToken) {
+        localStorage.setItem('sf_token', urlToken);
+        window.history.replaceState({}, document.title, '/');
+      }
+
+      const token = localStorage.getItem('sf_token');
+      if (!token) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/me`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
       setIsAuthenticated(data.loggedIn);
@@ -28,7 +43,13 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, { credentials: 'include' });
+      const token = localStorage.getItem('sf_token');
+      if (token) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/logout`, { 
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      localStorage.removeItem('sf_token');
       setIsAuthenticated(false);
     } catch (err) {
       console.error('Logout failed', err);

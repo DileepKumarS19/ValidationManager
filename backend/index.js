@@ -91,15 +91,18 @@ app.get('/oauth/callback', async (req, res) => {
         code_verifier: req.session.codeVerifier
       }
     });
-    req.session.sf = {
+    const sfData = {
       accessToken: data.access_token,
       instanceUrl: data.instance_url,
       userInfo: data.id
     };
+    req.session.sf = sfData;
     
     req.session.save(() => {
-      console.log('✅ OAuth Success! Session saved.');
-      res.redirect(process.env.FRONTEND_URL); // Redirect back to Vite frontend
+      console.log('✅ OAuth Success! Session saved. Sending token to frontend.');
+      const tokenStr = Buffer.from(JSON.stringify(sfData)).toString('base64');
+      const baseUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
+      res.redirect(`${baseUrl}/?token=${tokenStr}`); 
     });
   } catch (err) {
     console.error('❌ OAuth Error:', err.response?.data || err.message);
@@ -108,12 +111,26 @@ app.get('/oauth/callback', async (req, res) => {
 });
 
 app.get('/api/me', (req, res) => {
-  res.json({ loggedIn: !!req.session.sf });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.json({ loggedIn: false });
+  }
+  res.json({ loggedIn: true });
 });
 
 app.get('/api/validation-rules', async (req, res) => {
-  const { accessToken, instanceUrl } = req.session.sf || {};
-  if (!accessToken) return res.status(401).json({ error: 'Not authenticated' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  let sfData;
+  try {
+    const tokenStr = authHeader.split(' ')[1];
+    sfData = JSON.parse(Buffer.from(tokenStr, 'base64').toString());
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const { accessToken, instanceUrl } = sfData;
 
   try {
     // 1. Query basic fields (cannot query Metadata field on multiple rows)
@@ -145,8 +162,18 @@ app.get('/api/validation-rules', async (req, res) => {
 
 // 5. Deploy changes — receives array of modified rules
 app.post('/api/deploy', async (req, res) => {
-  const { accessToken, instanceUrl } = req.session.sf || {};
-  if (!accessToken) return res.status(401).json({ error: 'Not authenticated' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  let sfData;
+  try {
+    const tokenStr = authHeader.split(' ')[1];
+    sfData = JSON.parse(Buffer.from(tokenStr, 'base64').toString());
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  const { accessToken, instanceUrl } = sfData;
 
   const { rules } = req.body; 
   const results = [];

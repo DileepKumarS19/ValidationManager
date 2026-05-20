@@ -14,8 +14,9 @@ export default function Dashboard({ onLogout }) {
     setError(null);
     setSuccessMsg(null);
     try {
+      const token = localStorage.getItem('sf_token');
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/validation-rules`, {
-        credentials: 'include'
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -66,12 +67,13 @@ export default function Dashboard({ onLogout }) {
     setSuccessMsg(null);
 
     try {
+      const token = localStorage.getItem('sf_token');
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include',
         body: JSON.stringify({ rules: modifiedRules }),
       });
 
