@@ -34,8 +34,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: true, // Force true for Render HTTPS
+    sameSite: 'none' // Force none for cross-domain Vercel requests
   }
 }));
 
