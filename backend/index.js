@@ -23,7 +23,7 @@ function sha256(str) {
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: process.env.FRONTEND_URL,
   credentials: true
 }));
 app.use(express.json());
@@ -44,7 +44,6 @@ app.get('/auth/login', (req, res) => {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.SF_CLIENT_ID,
-    redirect_uri: 'http://localhost:5000/oauth/callback', // Hardcoded to prevent env issues
     scope: 'api',
     code_challenge: challenge,
     code_challenge_method: 'S256'
