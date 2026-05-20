@@ -40,6 +40,10 @@ app.use(session({
 
 const SF_LOGIN_URL = 'https://login.salesforce.com';
 
+app.get('/', (req, res) => {
+  res.send('Validation Manager Backend is running properly! 🚀');
+});
+
 app.get('/auth/login', (req, res) => {
   console.log('➡️ Starting Salesforce Login flow...');
   const verifier = base64URLEncode(crypto.randomBytes(32));
